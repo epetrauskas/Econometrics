@@ -1,0 +1,22 @@
+---
+title: "Duomenu nuskaitymas naudojant sasaja"
+author: "Edgaras Petrauskas"
+date: "Tuesday, March 08, 2016"
+output: html_document
+---
+
+Reading data uses connections which can be local files, remote files accessed via http, pipes from other programs or more.
+
+As a simple example, consider this access for N=10 random integers between min=100 and max=200 from random.org (which supplies true random numbers based on atmospheric noise rather than a pseudo random number generator):
+
+```{r eval = FALSE}
+
+site <- "http://random.org/integers/"         # base URL
+query <- "num=10&min=100&max=200&col=2&base=10&format=plain&rnd=new"
+txt <- paste(site, query, sep="?")            # concat url and query string
+nums <- read.table(file=txt)                  # and read the data
+nums                                          # and show it
+
+```
+
+Source: [link](http://stackoverflow.com/questions/1295955/what-is-the-most-useful-r-trick)
