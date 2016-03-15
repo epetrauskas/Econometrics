@@ -1,0 +1,76 @@
+---
+title: "task4"
+author: "Edgaras Petrauskas"
+date: "Monday, March 14, 2016"
+output: html_document
+---
+Aplanke task4 yra duomenų failas, kuriame rasite nekilnojamo turto (o tiksliau gyvenamųjų butų) kainas ir kaikurias jų charakteristikas. Jūsų užduotis yra atlikti išsamią tiesinę regresiją. Lygtis reikalinga prekyboms agentams, kad geriau suprastų kokią įtaką skirtingos charakteristikos daro galutinei kainai.
+
+Nuskaitomi duomenys ir susidaromas bendras duomenų vaizdas.
+
+```{r}
+library(car)
+setwd("C:/Users/Vartotojas/Desktop/Econometrics/task4")
+duom <- read.csv2("data.csv")
+attach(duom)
+str(duom)
+head(duom)
+```
+
+Pirmiausia ieškosime duomenų išskirčių. Grafiškai:
+
+```{r}
+mod.lm <- lm(kaina ~ plotas + aukstas + garsoIzoliacija + silumosLaidumas + atstumasIkiPrekybosCentro, data = duom)  # Pradinis nepakeistas modelis
+mod.lm
+
+par(mfrow=c(2,2))
+plot(mod.lm)
+```
+
+Iš grafikų matosi įtartinos 253 ir 254 reikšmės, pasitikslinsime outlierTest pagalba.
+
+```{r}
+outlierTest(mod.lm)
+duom1 <- duom[-c(253, 254),]  # Išskirtis pašaliname
+tail(duom1)
+```
+
+Reikia nustatyti, ar yra x'sų priklausomybė su kitais x'sais. Žiūrėsime koreliaciją tarp jų.
+
+```{r}
+cor(duom1) # Iš koreliacijų maatricos matosi, kad šilumos laidumas ir garso izoliacija yra stipriai    koreliuoti (koeficientas 0.95).
+vif(mod.lm) # šilumos laidumo ir garso izoliacijos VIF'ai taip pat yra dideli (>10).
+``` 
+
+Vadinasi, pradiniame modelyje yra multikolinearumo problema. Modelyje prasmingiau būtų naudoti šilumos laidumą, todėl iš jo išmesime garso izoliaciją.
+
+```{r}
+duom2 <- duom1[,-4]
+head(duom2)
+tail(duom2)
+```
+
+Patikrinsime naujo modelio be garso izoliacijos heteroskedastiškumą.
+
+```{r}
+mod1.lm <- lm(kaina ~ plotas + aukstas + silumosLaidumas + atstumasIkiPrekybosCentro, data = duom2)
+mod1.lm
+summary(mod1.lm)
+```
+
+Kadangi atstumo iki prekybos centro p-value 0.438310 > 0.05, šis narys yra statistiškai nereikšmingas, todėl jį išmesime.
+
+```{r}
+mod2.lm <- lm(kaina ~ plotas + aukstas + silumosLaidumas, data = duom2)
+mod2.lm
+summary(mod2.lm)
+confint(mod2.lm)
+```
+
+Tikriname heteroskedatstiškumą ir VIF.
+```{r}
+ncvTest(mod2.lm) # p = 0.07 > 0.05, vadinasi modelis homoskedastiškas.
+vif(mod2.lm)     # VIF maži viskas gerai.
+apzvalga <- summary(mod2.lm)
+apzvalga$adj.r.squared 
+```
