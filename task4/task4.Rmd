@@ -41,13 +41,13 @@ duom2 <- duom1[,-4]
 Patikrinsime naujo modelio be garso izoliacijos heteroskedastiškumą.
 ```{r}
 mod2.lm <- lm(kaina ~ plotas + aukstas + silumosLaidumas + atstumasIkiPrekybosCentro, data = duom2)
-kable(summary(mod2.lm)$coef,digits=2)
+kable(summary(mod2.lm)$coef, digits = 2)
 ```
 
 Kadangi atstumo iki prekybos centro p-value 0.295 > 0.05, šis narys yra statistiškai nereikšmingas, todėl iš modelio jį išmesime.
 ```{r}
 mod3.lm <- lm(kaina ~ plotas + aukstas + silumosLaidumas, data = duom2)
-kable(summary(mod3.lm)$coef,digits=2)
+kable(summary(mod3.lm)$coef, digits = 2)
 ```
 
 Tikriname heteroskedatstiškumą ir VIF.
@@ -61,7 +61,7 @@ aukstaszym <- factor(duom2$aukstas)
 is.factor(aukstaszym)
 aukstaszym
 mod4.lm <- lm(kaina ~ plotas + aukstaszym + silumosLaidumas, data = duom2)
-kable(summary(mod4.lm)$coef,digits=2) 
+kable(summary(mod4.lm)$coef, digits = 2) 
 ```
 
 Kadangi lygtyje pirmas aukštas yra bazinis, tai vien tai, kad butas nėra pirmame aukšte, ženkliai kelia jo kainą (maždaug nuo 5000 iki 6000 kainos vnt.). Matomas ryškus skirtumas tarp pirmo ir likusiųjų aukštų kainų, todėl nepirmus aukštus modelyje galima neišskaidyti.
@@ -69,7 +69,7 @@ Kadangi lygtyje pirmas aukštas yra bazinis, tai vien tai, kad butas nėra pirma
 aukstaslik = as.numeric(duom2$aukstas!=1)
 aukstaslik  # reikšmė 0, kai pirmas aukštas
 mod5.lm <- lm(kaina ~ plotas + aukstaslik + silumosLaidumas, data = duom2)
-kable(summary(mod5.lm)$coef,digits=2) # visi kintamieji reikšmingi
+kable(summary(mod5.lm)$coef, digits = 2) # visi kintamieji reikšmingi
 
 AIC(mod1.lm)
 AIC(mod2.lm)
@@ -88,10 +88,10 @@ lines(density(resid(mod5.lm)), col = "red")
 res <- as.vector(mod5.lm$residuals)
 shapiro.test(res)  # p-value = 0.3798 > 0.05, vadinasi liekanos normalios
 
-kable(summary(mod5.lm)$coef,digits=2)
+kable(summary(mod5.lm)$coef, digits = 2)
 
 ```
 
-Taigi, skirtingų charakteristikų darommą įtaką galutinei kainai geriausiai prognozuoja modelis mod5.lm
+Taigi, skirtingų charakteristikų daromą įtaką galutinei kainai geriausiai prognozuoja modelis mod5.lm
 
 $$kaina = 4795,47 + 598,94 \cdot plotas + 5440,16 \cdot aukstaslik + 531,42 \cdot silumosLaidumas + \varepsilon$$
