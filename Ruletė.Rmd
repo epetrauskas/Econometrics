@@ -1,0 +1,30 @@
+---
+title: "task3 - Ruletė"
+author: "Edgaras Petrauskas"
+date: "Tuesday, March 08, 2016"
+output: html_document
+---
+
+Užduotis: Nagrinėkime standartinę kazino ruletę. Kokia tikimybė po $1000$ vienodų statymų ant vienos pasirinktos spalvos, bus teigiamas balansas? Raskite apytikslę $x$ reikšmę, kuriai galioja nelygybe $P(balansas<x) = 0.25$.
+
+Funkcija, kuri prasuks ruletę 1000 kartų:
+```{r}
+rulete <- function() {
+  sum(sample(c(1,-1), 1000, prob=c(18/38, 19/38), replace=TRUE))
+}
+```
+
+Funkcija pakartojama 100000 kartų ir randama P, kad bus teigiamas balansas:
+```{r}
+  pinigu_balansas <- replicate(10^5, rulete())
+  P <- mean(pinigu_balansas>0)
+  P # tik apie 19 % kartų nepralošime pinigų
+```
+
+Reikia rasti apytikslę $x$ reikšmę, kuriai galioja nelygybė $P(balansas<x) = 0.25$.
+Ji bus pirmajame kvantilyje.
+```{r}
+quantile(pinigu_balansas, 0.25)
+```
+
+Vadinasi po 1000 statymų ketvirtadalį kartų pinigų balansas bus mažesnis nei -48.
