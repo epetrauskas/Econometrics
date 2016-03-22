@@ -20,16 +20,16 @@ plot(M1Germany)
 Kuriami modeliai su skirtingais lagais, endogeninis kintamasis - logm1. 
 
 ```{r}
-mod1 <- dynlm(logm1 ~ L(logprice,2) +d(L(loggnp,2)) +L(interest,2), data = M1Germany)
+mod1 <- dynlm(logm1 ~ L(logprice,2) + d(L(loggnp,2)) + L(interest,2), data = M1Germany)
 kable(summary(mod1)$coef,digits=2)
-mod2 <- dynlm(logm1 ~ d(L(logprice,3)) +L(loggnp,3) +L(interest,3), data = M1Germany)
+mod2 <- dynlm(logm1 ~ d(L(logprice,3)) + L(loggnp,3) + L(interest,3), data = M1Germany)
 kable(summary(mod2)$coef,digits=2)
-mod3 <- dynlm(logm1 ~ L(logprice,3) +d(L(loggnp,2)) +L(interest,3), data = M1Germany)
+mod3 <- dynlm(logm1 ~ L(logprice,3) + d(L(loggnp,2)) + L(interest,3), data = M1Germany)
 kable(summary(mod3)$coef,digits=2)
-mod4 <- dynlm(logm1 ~ d(L(logprice,3)) +(L(loggnp,3)) +(L(interest,2)), data = M1Germany)
+mod4 <- dynlm(logm1 ~ d(L(logprice,3)) + L(loggnp,3)) + (L(interest,2)), data = M1Germany)
 kable(summary(mod4)$coef,digits=2)
-mod5 <- dynlm(logm1 ~ L(logprice,3)+ d(L(loggnp,2))+ L(interest,1), data = M1Germany)
-kable(summary(mod5)$coef,digits=2)
+mod5 <- dynlm(logm1 ~ L(logprice,3) + d(L(loggnp,2)) + L(interest,1), data = M1Germany)
+kable(summary(mod5)$coef, digits = 2)
 ```
 
 Visi kintamieji modeliuose reikšmingi, galime patikrinti modelių multikolinearumą.
