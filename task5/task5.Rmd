@@ -1,0 +1,68 @@
+---
+title: "task5"
+author: "Edgaras Petrauskas"
+date: "Monday, March 21, 2016"
+output: html_document
+---
+Užduotis: Pinigų paklausa. Šioje užduotyje reikia atlikti tiesinę regresiją. Pakete dynlm yra duomenų masyvas M1Germany - ten yra ir jo aprašymas. Iš turimų duomenų sudarykite ir įvertinkite tiesinę regresiją, kurios endogeninis kintamasis yra logm1. Lygtis būtų naudojama prognozuoti pinigų kiekį artimiausiam laikotarpiui į prieki remiantis dabartine situacija. Taigi prognozės sudarymui lygtis gali naudoti tik tuos duomenis, kurie būtų žinomi prognozavimo momentu.
+
+Nuskaitomi duomenys ir susidaromas bendras duomenų vaizdas.
+
+```{r, message=FALSE, warning=FALSE}
+library(dynlm)
+library(car)
+library(knitr)
+head(M1Germany)
+str(M1Germany)
+plot(M1Germany)
+```
+
+Kuriami modeliai su skirtingais lagais, endogeninis kintamasis - logm1. 
+
+```{r}
+mod1 <- dynlm(logm1 ~ L(logprice,2) +d(L(loggnp,2)) +L(interest,2), data = M1Germany)
+kable(summary(mod1)$coef,digits=2)
+mod2 <- dynlm(logm1 ~ d(L(logprice,3)) +L(loggnp,3) +L(interest,3), data = M1Germany)
+kable(summary(mod2)$coef,digits=2)
+mod3 <- dynlm(logm1 ~ L(logprice,3) +d(L(loggnp,2)) +L(interest,3), data = M1Germany)
+kable(summary(mod3)$coef,digits=2)
+mod4 <- dynlm(logm1 ~ d(L(logprice,3)) +(L(loggnp,3)) +(L(interest,2)), data = M1Germany)
+kable(summary(mod4)$coef,digits=2)
+mod5 <- dynlm(logm1 ~ L(logprice,3)+ d(L(loggnp,2))+ L(interest,1), data = M1Germany)
+kable(summary(mod5)$coef,digits=2)
+```
+
+Visi kintamieji modeliuose reikšmingi, galime patikrinti modelių multikolinearumą.
+
+```{r}
+vif(mod1)
+vif(mod2)
+vif(mod3)
+vif(mod4)
+vif(mod5)
+```
+
+Modeliai nėra multikolinearūs, palyginsime juos pagal AIC ir BIC kriterijus.
+
+```{r, eval=FALSE}
+AIC(mod1)
+AIC(mod2)
+AIC(mod3)
+AIC(mod4)
+AIC(mod5)
+
+BIC(mod1)
+BIC(mod2)
+BIC(mod3)
+BIC(mod4)
+BIC(mod5)
+```
+
+3 modelis pagal AIC ir BIC yra geriausias. Reikia įsitikinti, ar modelio paklaidos yra normaliosios.
+
+```{r}
+hist(resid(mod3), probability = TRUE, main = "Paklaidų grafikas")  #paklaidų grafikas panašus į normalųjį.
+lines(density(resid(mod3)), col = "red")
+res <- as.vector(mod3$residuals)
+shapiro.test(res)  #p-value = 0.3661 > 0.05, vadinasi liekanos normalios.
+```
