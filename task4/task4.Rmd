@@ -1,0 +1,97 @@
+---
+title: "task4"
+author: "Edgaras Petrauskas"
+date: "Monday, March 14, 2016"
+output: html_document
+---
+Aplanke task4 yra duomenų failas, kuriame rasite nekilnojamo turto (o tiksliau gyvenamųjų butų) kainas ir kaikurias jų charakteristikas. Jūsų užduotis yra atlikti išsamią tiesinę regresiją. Lygtis reikalinga prekyboms agentams, kad geriau suprastų kokią įtaką skirtingos charakteristikos daro galutinei kainai.
+
+Nuskaitomi duomenys ir susidaromas bendras duomenų vaizdas.
+```{r, warning=FALSE}
+library(car)
+library(knitr)
+setwd("C:/Users/Vartotojas/Desktop/Econometrics/task4")
+duom <- read.csv2("data.csv")
+attach(duom)
+str(duom)
+kable(head(duom), digits = 2)
+```
+
+Pirmiausia ieškosime duomenų išskirčių. Grafiškai:
+```{r}
+mod1.lm <- lm(kaina ~ plotas + aukstas + garsoIzoliacija + silumosLaidumas + atstumasIkiPrekybosCentro, data = duom)  # pradinis nepakeistas modelis
+par(mfrow=c(2,2))
+plot(mod1.lm)
+```
+
+Iš grafikų matosi įtartinos 253 ir 254 reikšmės, pasitikslinsime outlierTest pagalba.
+```{r}
+outlierTest(mod1.lm)
+duom1 <- duom[-c(253, 254),]  # išskirtis pašaliname
+```
+Reikia nustatyti, ar yra x'sų priklausomybė su kitais x'sais. Žiūrėsime koreliaciją tarp jų.
+```{r}
+cor(duom1) # iš koreliacijų maatricos matosi, kad šilumos laidumas ir garso izoliacija yra stipriai koreliuoti (koeficientas net 0.95)
+vif(mod1.lm) # šilumos laidumo ir garso izoliacijos VIF'ai taip pat yra dideli (>10)
+``` 
+Vadinasi, pradiniame modelyje yra multikolinearumo problema. Modelyje prasmingiau būtų naudoti šilumos laidumą, todėl iš jo išmesime garso izoliaciją.
+```{r}
+duom2 <- duom1[,-4]
+```
+Patikrinsime naujo modelio be garso izoliacijos heteroskedastiškumą.
+```{r}
+mod2.lm <- lm(kaina ~ plotas + aukstas + silumosLaidumas + atstumasIkiPrekybosCentro, data = duom2)
+kable(summary(mod2.lm)$coef,digits=2)
+```
+
+Kadangi atstumo iki prekybos centro p-value 0.295 > 0.05, šis narys yra statistiškai nereikšmingas, todėl iš modelio jį išmesime.
+```{r}
+mod3.lm <- lm(kaina ~ plotas + aukstas + silumosLaidumas, data = duom2)
+kable(summary(mod3.lm)$coef,digits=2)
+```
+
+Tikriname heteroskedatstiškumą ir VIF.
+```{r}
+ncvTest(mod3.lm) # p = 0.07 > 0.05, vadinasi modelis homoskedastiškas
+vif(mod3.lm)     # VIF maži - viskas gerai
+```
+Galima numanyti, kad buto aukštą geriau naudoti kaip žyminį kintamąjį (dummy variable). Pavyzdžiui, kainų skirtumas tarp 1 ir 2 aukštų turėtų būti didesnis nei tarp 7 ir 8 aukštų.  
+```{r}
+aukstaszym <- factor(duom2$aukstas)
+is.factor(aukstaszym)
+aukstaszym
+mod4.lm <- lm(kaina ~ plotas + aukstaszym + silumosLaidumas, data = duom2)
+kable(summary(mod4.lm)$coef,digits=2) 
+```
+
+Kadangi lygtyje pirmas aukštas yra bazinis, tai vien tai, kad butas nėra pirmame aukšte, ženkliai kelia jo kainą (maždaug nuo 5000 iki 6000 kainos vnt.). Matomas ryškus skirtumas tarp pirmo ir likusiųjų aukštų kainų, todėl nepirmus aukštus modelyje galima neišskaidyti.
+```{r}
+aukstaslik = as.numeric(duom2$aukstas!=1)
+aukstaslik  # reikšmė 0, kai pirmas aukštas
+mod5.lm <- lm(kaina ~ plotas + aukstaslik + silumosLaidumas, data = duom2)
+kable(summary(mod5.lm)$coef,digits=2) # visi kintamieji reikšmingi
+
+AIC(mod1.lm)
+AIC(mod2.lm)
+AIC(mod3.lm)
+AIC(mod4.lm)
+AIC(mod5.lm) # pagal AIC paskutinis modelis yra tiksliausias
+
+ncvTest(mod5.lm) # p = 0.79 > 0.05, vadinasi modelis homoskedastiškas
+vif(mod5.lm)     # VIF maži - viskas gerai
+```
+Reikia įsitikinti, ar modelio paklaidos yra normaliosios.
+```{r}
+par(mfrow=c(1,1))
+hist(resid(mod5.lm), probability = TRUE, main = "Paklaidų grafikas")  # paklaidų grafikas panašus į normalųjį
+lines(density(resid(mod5.lm)), col = "red")
+res <- as.vector(mod5.lm$residuals)
+shapiro.test(res)  # p-value = 0.3798 > 0.05, vadinasi liekanos normalios
+
+kable(summary(mod5.lm)$coef,digits=2)
+
+```
+
+Taigi, skirtingų charakteristikų darommą įtaką galutinei kainai geriausiai prognozuoja modelis mod5.lm
+
+$$kaina = 4795,47 + 598,94 \cdot plotas + 5440,16 \cdot aukstaslik + 531,42 \cdot silumosLaidumas + \varepsilon$$
