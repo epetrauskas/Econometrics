@@ -1,0 +1,107 @@
+---
+title: "task6"
+author: "Edgaras Petrauskas"
+date: "Tuesday, April 05, 2016"
+output: html_document
+---
+
+## Forecasting: Principles & Practice
+
+2. For each of the following series, make a graph of the data with forecasts
+using the most appropriate of the four benchmark methods:
+mean, naive, seasonal naive or drift. In each case, do you think the forecasts are reasonable? If not, how could they be improved?
+
+**(a) Annual bituminous coal production (1920–1968). Data set bicoal.**
+```{r, warning=FALSE, message=FALSE}
+library(fpp)
+plot(bicoal)
+par(mfrow = c(2,2))
+plot(meanf(bicoal, h=20))
+plot(rwf(bicoal, h=20))
+plot(snaive(bicoal, h=20))
+plot(rwf(bicoal, drift=TRUE, h=20))
+```
+
+Visi, išskyrus mean prognozę, atrodo priimtini.
+
+**(b) Price of chicken (1924–1993). Data set chicken.**
+
+```{r}
+plot(chicken)
+par(mfrow = c(2,2))
+plot(meanf(chicken, h=10))
+plot(naive(chicken, h=20))
+plot(snaive(chicken, h=20))
+plot(rwf(chicken, drift=TRUE, h=20))
+```
+
+Antroji ir trečioji prognozės atrodo logiškiausiai (pirmoji akivaizdžiai netinka, ketvirtoji prognozuoja dar didesnį kritimą, nors atrodo, kad duomenys maždaug nusistovėjo).
+
+**(c) Monthly total of people on unemployed benefits in Australia (January 1956–July 1992). Data set dole.**
+
+```{r}
+plot(dole)
+par(mfrow = c(2,2))
+plot(meanf(dole, h=20))
+plot(naive(dole, h=20))
+plot(snaive(dole, h=20))
+plot(rwf(dole, drift=TRUE, h=20))
+```
+
+Vėlgi, akivaizdžiai netiksli pirmoji prognozė, o likusios atrodo logiškiau ir iš akies nustatyti geriausią nėra taip paprasta. Remiantis knygos 2.6 skyreliu, galima įvertinti prognozės gerumą paklaidų prasme. 
+
+```{r, warning=FALSE, echo=FALSE}
+library(knitr)
+kable(accuracy(meanf(dole, h=20)))
+kable(accuracy(naive(dole, h=20)))
+kable(accuracy(snaive(dole, h=20)))
+kable(accuracy(rwf(dole, drift=TRUE, h=20)))
+```
+
+Mažiausios paklaidos įvairiomis priemonėmis gaunasi 2 ir 4 prognozėse, todėl jas rinktis būtų logiškiausia.
+
+**(d) Monthly total of accidental deaths in the United States (January 1973–December 1978). Data set usdeaths.**
+
+```{r}
+plot(usdeaths)
+par(mfrow = c(2,2))
+plot(meanf(usdeaths, h=10))
+plot(naive(usdeaths, h=20))
+plot(snaive(usdeaths, h=20))
+plot(rwf(usdeaths, drift=TRUE, h=20))
+```
+
+Akivaizdžiai geriausia trečioji prognozė, nes įvetina sezoniškumo įtaką.
+
+**(e) Quarterly production of bricks (in millions of units) at Portland,Australia (March 1956–September 1994). Data set bricksq.**
+
+```{r}
+plot(bricksq)
+par(mfrow = c(2,2))
+plot(meanf(bricksq, h=10))
+plot(naive(bricksq, h=20))
+plot(snaive(bricksq, h=20))
+plot(rwf(bricksq, drift=TRUE, h=20))
+```
+
+3 prognozėje labiau įvertinamas sezoniškumas, o 4 - trendas. Galima pasitikslinti prognozių tikslumą.
+
+```{r}
+kable(accuracy(snaive(bricksq, h=20)))
+kable(accuracy(rwf(bricksq, drift=TRUE, h=20)))
+```
+
+4 prognozė tikslesnė.
+
+**(f) Annual Canadian lynx trappings (1821–1934). Data set lynx.**
+
+```{r}
+plot(lynx)
+par(mfrow = c(2,2))
+plot(meanf(lynx, h=10))
+plot(naive(lynx, h=20))
+plot(snaive(lynx, h=20))
+plot(rwf(lynx, drift=TRUE, h=20))
+```
+
+Reikėtų rinktis tarp 2 ir 3 prognozės, nes 4 yra didėjimo trendas, kurio tikrai nėra pradiniuose duomenyse ilguoju laikotarpiu. Tačiau gerai prognozei abiem atvejais trūksta periodiškumo.
