@@ -29,7 +29,7 @@ Visi, išskyrus mean prognozę, atrodo priimtini.
 ```{r}
 plot(chicken)
 par(mfrow = c(2,2))
-plot(meanf(chicken, h=10))
+plot(meanf(chicken, h=20))
 plot(naive(chicken, h=20))
 plot(snaive(chicken, h=20))
 plot(rwf(chicken, drift=TRUE, h=20))
@@ -65,7 +65,7 @@ Mažiausios paklaidos įvairiomis priemonėmis gaunasi 2 ir 4 prognozėse, todė
 ```{r}
 plot(usdeaths)
 par(mfrow = c(2,2))
-plot(meanf(usdeaths, h=10))
+plot(meanf(usdeaths, h=20))
 plot(naive(usdeaths, h=20))
 plot(snaive(usdeaths, h=20))
 plot(rwf(usdeaths, drift=TRUE, h=20))
@@ -78,7 +78,7 @@ Akivaizdžiai geriausia trečioji prognozė, nes įvetina sezoniškumo įtaką.
 ```{r}
 plot(bricksq)
 par(mfrow = c(2,2))
-plot(meanf(bricksq, h=10))
+plot(meanf(bricksq, h=20))
 plot(naive(bricksq, h=20))
 plot(snaive(bricksq, h=20))
 plot(rwf(bricksq, drift=TRUE, h=20))
@@ -98,7 +98,7 @@ kable(accuracy(rwf(bricksq, drift=TRUE, h=20)))
 ```{r}
 plot(lynx)
 par(mfrow = c(2,2))
-plot(meanf(lynx, h=10))
+plot(meanf(lynx, h=20))
 plot(naive(lynx, h=20))
 plot(snaive(lynx, h=20))
 plot(rwf(lynx, drift=TRUE, h=20))
