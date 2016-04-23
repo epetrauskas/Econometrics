@@ -1,0 +1,190 @@
+---
+title: "task7"
+author: "Edgaras Petrauskas"
+date: "Saturday, April 23, 2016"
+output: html_document
+---
+
+3. For the data set bricksq:
+=====================================
+
+**(a) Split the data into two parts**
+
+```{r, warning=FALSE, message=FALSE}
+library(fpp)
+library(knitr)
+bricks1 <- window(bricksq, end=1987.99)
+bricks2 <- window(bricksq, start=1988)
+```
+
+**(b) Check that your data have been split appropriately by producingthe following plot.**
+
+```{r}
+plot(bricksq)
+lines(bricks1,col="red")
+lines(bricks2,col="blue")
+```
+
+**(c) Calculate forecasts using each of the four benchmark methods applied to bricks1.**
+
+```{r}
+forecast_mean <- meanf(bricks1, h=20)
+forecast_naive <- naive(bricks1, h=20)
+forecast_snaive <- snaive(bricks1, h=20)
+forecast_drift <- rwf(bricks1, drift=TRUE, h=20)
+```
+
+Galime pasižiūrėti grafiškai:
+
+```{r, echo=FALSE}
+par(mfrow = c(2,2))
+plot(forecast_mean)
+plot(forecast_naive)
+plot(forecast_snaive)
+plot(forecast_drift)
+```
+
+**(d) Compare the accuracy of your forecasts against the actual values stored in bricks2.**
+
+```{r}
+kable(accuracy(forecast_mean, bricks2))
+kable(accuracy(forecast_naive, bricks2))
+kable(accuracy(forecast_snaive, bricks2))
+kable(accuracy(forecast_drift, bricks2))
+```
+
+**(e) Which method does best? Why?**
+
+Pagal 4 populiariausius prognozių tikslumo matus (MAE ir RMSE - priklausomi nuo matavimo skalės, MAPE ir sMAPE - nepriklausomi nuo matavimo skalės), geriausias yra snaive metodas. Taip yra dėl to, jog snaive atsižvelgia į sezoniškumą, kuris yra pastebimas duomenyse.
+
+**(f) For the best method, compute the residuals and plot them. Do the residuals appear to be uncorrelated and normally distributed?**
+
+```{r}
+res <- residuals(forecast_snaive)
+plot(res) # galima įtarti, kad liekanos bus koreliuotos
+hist(res, breaks="FD") # matoma, jog skirstinys asimetriškas, labiau ištemptas kairysis sparnas (asimetrijos koef. <0)
+Acf(res) # aiškiai matoma, kad liekanos koreliuotos ir acf grafikas taip pat parodo, jog duomenis veikia sezoniškumas
+shapiro.test(res) 
+# įsitikinama, kad liekanos nėra normaliai pasiskirsčiusios (atmetama H0, kad liekanų pasiskirstymas yra normalusis - p-value < 0.05)
+```
+
+**Išvada : net ir snaive modelis nėra tinkamas prognozei, kadangi liekanos koreliuotos ir nenormaliai pasiskirsčiusios.**
+
+
+
+4. Consider the daily closing IBM stock prices (data set ibmclose).
+=====================================
+
+**(a) Produce some plots of the data in order to become familiar with it.**
+
+```{r}
+tsdisplay(ibmclose, plot.type="scatter") # The function tsdisplay(data, plot.type="scatter") is useful for showing a time plot, ACF plot and lagged scatterplot on the same graph.
+```
+
+**(b) Split the data into a training set of 300 observations and a test set of 69 observations.**
+
+```{r}
+ibmclose1 <- window(ibmclose, end = 300)
+ibmclose2 <- window(ibmclose, start = 301)
+plot(ibmclose)
+lines(ibmclose1,col="red")
+lines(ibmclose2,col="blue")
+```
+
+**(c) Try various benchmark methods to forecast the training set and compare the results on the test set. Which method did best?**
+
+```{r}
+forecast_mean <- meanf(ibmclose1, h=20)
+forecast_naive <- naive(ibmclose1, h=20)
+forecast_snaive <- snaive(ibmclose1, h=20)
+forecast_drift <- rwf(ibmclose1, drift=TRUE, h=20)
+
+kable(accuracy(forecast_mean, ibmclose2))
+kable(accuracy(forecast_naive, ibmclose2))
+kable(accuracy(forecast_snaive, ibmclose2))
+kable(accuracy(forecast_drift, ibmclose2))
+```
+
+```{r}
+plot(ibmclose) 
+lines(meanf(ibmclose1, h=70)$mean, col=5, lwd=2)
+lines(naive(ibmclose1, h=70)$mean, col=6, lwd=5)
+lines(snaive(ibmclose1, h=70)$mean, col=7, lwd=2)
+lines(rwf(ibmclose1,drift=TRUE,h=70)$mean, col=8, lwd=2)
+legend("bottomleft", lty=1, col=c(5,6,7,8), legend=c("Mean","Naive","Seasonal naive", "Drift"))  # https://www.otexts.org/fpp/2/5
+```
+
+Pastebima, kad naive ir snaive metodai sutampa, kadangi nėra sezoniškumo. Pagal 4 populiariausius prognozių tikslumo matus, geriausias yra naive (šiuo atveju, tas pats kaip snaive) metodas.
+
+**(d) For the best method, compute the residuals and plot them. What do the plots tell you?**
+
+```{r}
+res <- residuals(forecast_naive)
+plot(res) # liekanos svyruoja apie 0, kas yra gerai, tačiau yra ir išsiskiriančių reikšmių
+hist(res, breaks="FD") # panašu į normalųjį skirstinį
+Acf(res) # iš grafiko sudėtinga nustatyti, ar liekanos koreliuotos. Galima įsitikinti formaliai:
+Box.test(res, fitdf=0, type="Lj")
+```
+
+Kadangi p-value < 0.05, liekanos nėra baltasis triukšmas.
+
+**(e) Can you invent a better forecasting method than any of the benchmark methods for these data?**
+
+
+
+5. Consider the sales of new one-family houses in the USA (Jan 1987 – Nov 1995). Data set: hsales.
+=====================================
+
+**(a) Produce some plots of the data in order to become familiar with it.**
+
+```{r}
+tsdisplay(hsales, plot.type="scatter") 
+```
+
+**(b) Split the data into a training set and a test set, where the test set is the last two years of data.**
+
+```{r}
+sales1 <- window(hsales, end=1993.99)
+sales2 <- window(hsales, start=1994)
+plot(hsales)
+lines(sales1,col="red")
+lines(sales2,col="blue")
+```
+
+**(c) Try various benchmark methods to forecast the training set and compare the results on the test set. Which method did best?**
+
+```{r}
+forecast_mean <- meanf(sales1, h=20)
+forecast_naive <- naive(sales1, h=20)
+forecast_snaive <- snaive(sales1, h=20)
+forecast_drift <- rwf(sales1, drift=TRUE, h=20)
+
+kable(accuracy(forecast_mean, sales2))
+kable(accuracy(forecast_naive, sales2))
+kable(accuracy(forecast_snaive, sales2))
+kable(accuracy(forecast_drift, sales2))
+```
+
+```{r}
+plot(hsales) 
+lines(meanf(sales1, h=70)$mean, col=5, lwd=2)
+lines(naive(sales1, h=70)$mean, col=6, lwd=2)
+lines(snaive(sales1, h=70)$mean, col=7, lwd=2)
+lines(rwf(sales1,drift=TRUE,h=70)$mean, col=8, lwd=2)
+legend("bottomleft", lty=1, col=c(5,6,7,8), legend=c("Mean","Naive","Seasonal naive", "Drift"))
+```
+
+Ir remiantis accuracy funkcija, ir žiūrint grafiškai, geriausiai pasirodė seasonal naive metodas. 
+
+**(d) For the best method, compute the residuals and plot them. What do the plots tell you?**
+
+```{r}
+res <- residuals(forecast_snaive)
+plot(res) # yra dideli nukrypimai nuo 0, tačiau panašu, kad liekanų vidurkis bus kažkur apie 0, ko ir yra reikalaujama
+hist(res, breaks="FD") # panašu į normalųjį skirstinį
+Acf(res) # iš grafiko matoma, jog liekanos yra koreliuotos, galima numanyti duomenų sezoniškumą
+```
+
+**(e) Can you invent a better forecasting method than any of the benchmark methods for these data?**
+
+Būtų galima sukurti ir geresnį modelį, kadangi duomenyse galima įžvelgti ir cikliškumo požymius (duomenys neapibrėžtą laiko tarpą kyla ir panašiai tiek pat laiko leidžiasi).
