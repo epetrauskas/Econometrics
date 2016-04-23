@@ -17,7 +17,7 @@ library(fpp)
 plot(bicoal)
 par(mfrow = c(2,2))
 plot(meanf(bicoal, h=20))
-plot(rwf(bicoal, h=20))
+plot(naive(bicoal, h=20))
 plot(snaive(bicoal, h=20))
 plot(rwf(bicoal, drift=TRUE, h=20))
 ```
