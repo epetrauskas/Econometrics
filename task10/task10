@@ -1,0 +1,177 @@
+---
+title: "task10"
+author: "Edgaras Petrauskas"
+date: "Sunday, April 24, 2016"
+output: html_document
+---
+
+**[@Hyndman2014a, ch. 3., Lab Session 3]**
+
+1. For this exercise, use the price of a dozen eggs in the United States
+from 1900–1993 (data set eggs). Experiment with the various options
+in the holt() function to see how much the forecasts change
+with damped or exponential trend. Also try changing the parameter
+values for alpha and beta to see how they affect the forecasts. Try to
+develop an intuition of what each parameter and argument is doing
+to the forecasts.
+[Hint: use h=100 when calling holt() so you can clearly see the
+differences between the various options when plotting the forecasts.]
+  Which model gives the best RMSE?
+  Do the residuals from the best model look like white noise?
+
+```{r, warning=FALSE, message=FALSE}
+library(fpp)
+library(knitr)
+str(eggs)
+tsdisplay(eggs, plot.type="scatter") # pastebimas mažėjimo trendas
+```
+
+```{r}
+fit1 <- holt(eggs, h=100)
+#fit1$model
+plot(fit1, lwd=1.5, main="alpha=0.82, beta=0.0001")   
+lines(fitted(fit1), col="red")  
+
+```
+
+Funkcija rekomenduoja glodinimo parametrus alpha=0.82 ir beta=0.0004.
+Kadangi funkcija yra viena iš paprasčiausių, ji prognozuoja vienodą mažėjimą ir matoma logiška klaida, jog kainos ateityje įgyja net neigiamas reikšmes, ko negali būti.
+Galima pabandyti skirtingas holt() funkcijos galimybes ir pažiūrėti, kaip keičiasi prognozės su damped ir exponential trendu.  
+  Pabandysime **damped** trendo metodą.
+
+```{r}
+fit2 <- holt(eggs, h=100, damped=TRUE)
+plot(fit2, lwd=1.5, main="Damped (alpha=0.84, beta=0.0001)")
+lines(fitted(fit2), col="red")
+```
+
+  Grafike - rekomenduojama prognozė su damped trendo metodu
+
+```{r}
+fit2_1 <- holt(eggs, h=100, damped=TRUE, alpha=0.2)
+plot(fit2_1, lwd=1.5, main="Damped (alpha=0.2, beta=0.1)")
+lines(fitted(fit2_1), col="red")
+```
+
+Smarkiai sumažinus alpha ir truputį padidinus beta matoma, kad duomenys labiau suglodinami, o prognozė išlieka beveik nepakitusi.
+
+```{r}
+fit2_2 <- holt(eggs, h=100, damped=TRUE, alpha=0.01)
+plot(fit2_2, lwd=1.5, main="Damped (alpha=0.01, beta=0.005)")
+lines(fitted(fit2_2), col="red")
+```
+
+Dar labiau sumažinus alpha linija tampa vis labiau glodesnė. Visgi pastebima, kad šiais atvejais ilgame laikotarpyje nebūtų logiška remtis damped trendo metodu, nes kainos pasiekia neigiamas reikšmes.    
+  Pabandysime **exponential** trendo metodą.
+
+```{r}
+fit3 <- holt(eggs, h=100, exponential=TRUE)
+#fit3$model
+plot(fit3, lwd=1.5, main="alpha=0.825, beta=0.0001")
+lines(fitted(fit3), col="red")
+```
+
+  Grafike - rekomenduojama prognozė su exponential trendo metodu. Jau prognozė atrodo logiškiau, kadangi nepasiekiamos neigiamos Y ašies reikšmės.
+
+```{r}
+fit3_1 <- holt(eggs, h=100, exponential=TRUE, alpha=0.01)
+plot(fit3_1, lwd=1.5, main="alpha=0.01, beta=0.0036")
+lines(fitted(fit3_1), col="red")
+```
+
+Smarkiai sumažinus alpha funkcija tapo glodesnė ir pasikliautinasis intervalas žymiai susitraukė
+
+```{r}
+fit3_2 <- holt(eggs, h=100, exponential=TRUE, beta=0.01)
+plot(fit3_2, lwd=1.5, main="alpha=0.846, beta=0.01")
+lines(fitted(fit3_2), col="red")
+```
+
+```{r}
+fit3_3 <- holt(eggs, h=100, exponential=TRUE, beta=0.03)
+plot(fit3_3, lwd=1.5, main="alpha=0.85, beta=0.03")
+lines(fitted(fit3_3), col="red")
+```
+
+Iš paskutiniųjų dviejų grafikų pastebėtina, kad vos vos padidinus beta lygmenį, pasikliautinasis intervalas prasiplečia kardinaliai.
+
+*   Patikrinsime, kuris modelis duoda geriausią (t.y. mažiausią) RMSE.
+
+```{r}
+accuracy(fit1)[2]
+accuracy(fit2)[2]
+accuracy(fit2_1)[2]
+accuracy(fit2_2)[2]
+accuracy(fit3)[2]
+accuracy(fit3_1)[2]
+accuracy(fit3_2)[2]
+accuracy(fit3_3)[2]
+```
+
+Kaip ir buvo galima tikėtis, geriausiai pasirodė eksponentinio trendo fit3 modelis.
+
+*   Patikrinsime, ar liekanos iš geriausio modelio yra baltasis triukšmas.
+
+```{r}
+Acf(fit3$res)  # grafike gana akivaizdu, kad liekanos yra baltasis triukšmas
+Box.test(fit3$res, fitdf=0, type="Lj") # formalus įsitikinimas to nepaneigia, nes p-value > 0.05
+```
+
+
+
+
+
+## 2. For this exercise, use the monthly Australian short-term overseas visitors data, May 1985–April 2005. (Data set: visitors.)
+
+
+**(a) Make a time plot of your data and describe the main features of the series.**
+
+```{r}
+plot(visitors)
+tsdisplay(visitors, plot.type="scatter")
+```
+
+Iš grafikų pastebima, kad duomenys turi ryškų kasmetinį sezoniškumą bei kylantį trendą.
+
+**(b) Forecast the next two years using Holt-Winters’ multiplicative method.**
+
+```{r}
+progn <- hw(visitors, seasonal="multiplicative", h=24) # h - mėnesis
+plot(progn)
+lines(progn$fitted, col="red")
+```
+
+**(c) Why is multiplicative seasonality necessary here?**
+
+Todėl, kad multiplikatyvus metodas naudojamas, kai sezono svyravimai nėra pastovūs, o čia laikui bėgant įgijamų reikšmių diapazonas plečiasi.
+
+**(d) Experiment with making the trend exponential and/or damped.**
+
+```{r}
+progndam <- hw(visitors, seasonal="multiplicative", h=70, damped=TRUE)
+plot(progndam)
+lines(progndam$fitted, col="red")
+
+prognexp <- hw(visitors, seasonal="multiplicative", h=70, exponential=TRUE)
+plot(prognexp)
+lines(prognexp$fitted, col="red")
+```
+
+Pastebėtina, kad damped, priešingai nei exponential, prognozėje nerodo tolimesnio augimo.
+
+**(e) Compare the RMSE of the one-step forecasts from the various methods. Which do you prefer?**
+
+```{r}
+accuracy(progn)[2]
+accuracy(progndam)[2]
+accuracy(prognexp)[2]
+```
+
+Pagal RMSE reikėtų rinktis damped metodą.
+
+**(f) Check that the residuals from the best model look like white noise.**
+
+```{r}
+Acf(progndam$res)  # nors keli stulpeliai nežymiai kerta pasikliautinąjį intervalą, tačiau tikėtina, kad liekanos yra baltasis triukšmas
+Box.test(progndam$res, fitdf=0, type="Lj") # formalus įsitikinimas to nepaneigia
+```
