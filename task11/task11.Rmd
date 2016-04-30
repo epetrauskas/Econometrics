@@ -1,0 +1,42 @@
+---
+title: "task11"
+author: "Edgaras Petrauskas"
+date: "Tuesday, April 26, 2016"
+output: html_document
+---
+**[@Hyndman2014a, ch. 3., Lab Session 4]**
+
+# 1. Use ets() to find the best ETS model for the price of eggs (data set eggs). How does this model compare to the one you found in the previous lab session?
+
+```{r, warning=FALSE, message=FALSE}
+library(fpp)
+str(eggs)
+fit <- ets(eggs)
+fit
+```
+
+Išvedama ETS(M,N,N), t.y. multiplikatyvios paklaidos, nėra nei trendo, nei sezoniškumo.
+
+```{r}
+fcast <- forecast(fit, h=100)
+plot(fcast)
+
+fit3 <- holt(eggs, h=100, exponential=TRUE) # geriausias modelis iš lab3
+plot(fit3)
+```
+
+Pažiūrėsime, kuris modelis geresnis.
+
+```{r}
+fit[2]
+fit3$model[2]
+accuracy(fit)
+accuracy(fit3)
+```
+
+Pagal Akaike kriterijų, est funkcija gautas modelis yra šiek tiek geresnis, o mažiausios paklaidos įvairiais metodais gaunasi labai panašios. Taigi abu modelius būtų galima naudoti. Pasitikrinsime, ar naujojo modelio liekanos yra baltasis triukšmas.
+
+```{r}
+Acf(fit$res)
+Box.test(fit$res, fitdf=0, type="Lj") # taip, liekanos yra baltasis triukšmas, viskas gerai
+```
