@@ -130,7 +130,7 @@ Kadangi p-value < 0.05, liekanos nėra baltasis triukšmas.
 
 **(e) Can you invent a better forecasting method than any of the benchmark methods for these data?**
 
-
+Būtų galima, kadangi čia vis dar naudojami vieni iš paprasčiausių metodų.
 
 5. Consider the sales of new one-family houses in the USA (Jan 1987 – Nov 1995). Data set: hsales.
 =====================================
