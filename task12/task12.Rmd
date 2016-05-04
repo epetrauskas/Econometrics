@@ -78,5 +78,5 @@ sqrt(mean(e^2,na.rm=TRUE)) # RMSE
 
 **(g) How does the RMSE computed in (1f) compare to that computed in (1b)? Does the re-selection of a model at each step make much difference?**
 
-(b) dalies RMSE - 18,09 , (f) - 18,47. Skirtumas nėra didelis, tačiau b dalies ciklo suskaičiavimas trunka žymiai greičiau ir yra efektyvesnis.
+b dalies RMSE - 18,09 , f - 18,47. Skirtumas nėra didelis, tačiau b dalies ciklo suskaičiavimas trunka žymiai greičiau ir yra efektyvesnis.
 
