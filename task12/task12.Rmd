@@ -1,0 +1,82 @@
+---
+title: "task12"
+author: "Edgaras Petrauskas"
+date: "Tuesday, April 26, 2016"
+output: html_document
+---
+
+# 1. For this exercise, use the monthly Australian short-term overseas visitors data, May 1985–April 2005. (Data set: visitors in expsmooth package.)
+
+**(a) Use ets to find the best model for these data and record the training set RMSE. You should find that the best model is ETS(M,A,M).**
+
+```{r, warning=FALSE, message=FALSE}
+library(fpp)
+plot(visitors)
+str(visitors)
+tsdisplay(visitors, plot.type="scatter")
+```
+
+Duomenyse pastebimas sezoniškumas bei gęstantis didėjimo trendas.
+
+```{r}
+fit <- ets(visitors)
+fit
+accuracy(fit)[2]
+```
+
+Įsitikinome, kad ets funkcijos rezultatas yra (M,A,M). Training set RMSE - 15.847.
+
+**(b) We will now check how much larger the one-step RMSE is on out-of-sample data using time series cross-validation. The following code will compute the result, beginning with four years of data in the training set.**
+
+```{r}
+k <- 48 # minimum size for training set
+n <- length(visitors) # Total number of observations
+e <- visitors*NA # Vector to record one-step forecast errors
+for(i in 48:(n-1))
+{
+train <- ts(visitors[1:i],freq=12)
+fit <- ets(train, "MAM", damped=FALSE)
+fc <- forecast(fit,h=1)$mean
+e[i] <- visitors[i+1]-fc
+}
+sqrt(mean(e^2,na.rm=TRUE))
+```
+
+Taigi nuo 15,847 RMSE padidėjo iki 18,09 (b) dalyje.
+
+**(c) What would happen in the above loop if I had set train <- visitors[1:i]?**
+
+Iškart metama klaida, kadangi ets funkcija reikalauja laiko eilutės argumento, o šiuo atveju train kintamasis yra numeric tipo.
+
+**(d) Plot e. What do you notice about the error variances? Why does this occur?**
+
+```{r}
+plot(e)
+```
+
+Kadangi ciklas buvo pradėtas sukti nuo 48, tai neatvaizduojamos pirmų keturių metų paklaidos. Matoma, kad bėgant laikui didėja paklaidų sklaida, jos yra heteroskedastiškos, ką galima paaiškinti pačių duomenų vis didėjančia sklaida vėlesniais metais.
+
+**(e) How does this problem bias the comparison of the RMSE values from (1a) and (1b)? (Hint: think about the effect of the missing values in e.)**
+
+Kadangi b dalyje nenaudojami pirmi keturi metai, kurių duomenų sklaida yra žymiai mažesnė palyginus su vėlesniais metais, tai logiška, kad a dalies bendra vidutinė paklaidų sklaida bus mažesnė, nei b dalies. 
+
+**(f) In practice, we will not know that the best model on the whole data set is ETS(M,A,M) until we observe all the data. So a more realistic analysis would be to allow ets to select a different model each time through the loop. Calculate the RMSE using this approach. (Warning: it will take a while as there are a lot of models to fit.)**
+
+```{r}
+k <- 48
+n <- length(visitors) 
+e <- visitors*NA 
+for(i in 48:(n-1))
+{
+train <- ts(visitors[1:i],freq=12)
+fit <- ets(train) # nebenurodomas tikslus ets modelis, prasukami visi galimi variantai
+fc <- forecast(fit,h=1)$mean 
+e[i] <- visitors[i+1]-fc
+}
+sqrt(mean(e^2,na.rm=TRUE)) # RMSE
+```
+
+**(g) How does the RMSE computed in (1f) compare to that computed in (1b)? Does the re-selection of a model at each step make much difference?**
+
+(b) dalies RMSE - 18,09 , (f) - 18,47. Skirtumas nėra didelis, tačiau b dalies ciklo suskaičiavimas trunka žymiai greičiau ir yra efektyvesnis.
+
