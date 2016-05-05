@@ -1,0 +1,202 @@
+---
+title: "task13"
+author: "Edgaras Petrauskas"
+date: "Wednesday, May 04, 2016"
+output: html_document
+---
+## 1. For the following series, find an appropriate Box-Cox transformation and order of differencing in order to obtain stationary data.##
+* (a) usnetelec
+* (b) usgdp
+* (c) mcopper
+* (d) enplanements
+* (e) visitors
+
+```{r, warning=FALSE, message=FALSE}
+library(fpp)
+```
+
+* **(a) usnetelec**
+
+```{r}
+plot(usnetelec) # duomenys nestacionarūs, nes matomas trendas
+lambdaa <- BoxCox.lambda(usnetelec) # lambdos radimas
+lambdaa
+a <- BoxCox(usnetelec, lambdaa) # įvykdoma Box-Cox transformacija
+```
+
+A useful R function is ndiffs() which uses these tests to determine the appropriate number of first differences required for a non-seasonal time series. (Iš: https://www.otexts.org/fpp/8/1)
+
+```{r}
+na <- ndiffs(usnetelec) # surandama diferencijavimo eilė
+na
+adif <- diff(a, differences=na) # diferencijuojami duomenys
+plot(adif)
+```
+
+KPSS testas leis nustatyti, ar H0: duomenys stacionarūs.
+  
+```{r}
+kpss.test(adif)
+```
+
+p-value = 0.045 < 0.05, vadinasi duomenys nėra stacionarūs. Galime bandyti diferencijuoti dar kartą ir tikėtis reikiamų savybių.
+
+```{r}
+adif <- diff(a, differences=2)
+plot(adif)
+kpss.test(adif)
+```
+
+Šį kartą p-value = 0.1 > 0.05, vadinasi transformuoti duomenys yra stacionarūs.
+
+
+* **(b) usgdp**
+
+```{r}
+plot(usgdp) # duomenys nestacionarūs, nes matomas trendas
+lambdab <- BoxCox.lambda(usgdp) # lambdos radimas
+lambdab
+b <- BoxCox(usgdp, lambdab) # įvykdoma Box-Cox transformacija
+nb <- ndiffs(usgdp) # surandama diferencijavimo eilė
+nb
+bdif <- diff(b, differences=nb) # diferencijuojami duomenys
+plot(bdif)
+```
+
+KPSS testas leis nustatyti, ar H0: duomenys stacionarūs.
+  
+```{r}
+kpss.test(bdif)
+```
+
+p-value = 0.1 > 0.05, vadinasi transformuoti duomenys yra stacionarūs.
+
+
+* **(c) mcopper**
+
+```{r}
+plot(mcopper) 
+```
+
+Grafikas jau kardinaliai skiriasi nuo a ir b atvejų. Galime pažiūrėti, ar duomenyse yra sezoniškumas.
+
+```{r}
+Acf(mcopper) # sezoniškumo nesimato
+```
+
+```{r}
+lambdac <- BoxCox.lambda(mcopper) # lambdos radimas
+lambdac
+c <- BoxCox(mcopper, lambdac) # įvykdoma Box-Cox transformacija
+nc <- ndiffs(mcopper) # surandama diferencijavimo eilė
+nc
+cdif <- diff(c, differences=nc) # diferencijuojami duomenys
+plot(cdif)
+```
+
+```{r}
+kpss.test(cdif)
+```
+
+p-value = 0.1 > 0.05, vadinasi transformuoti duomenys yra stacionarūs.
+
+
+* **(d) enplanements**
+
+```{r}
+plot(enplanements) 
+```
+
+Šįkart panašu, kad duomenims įtaką daro sezoniškumas. Galime įsitikinti:
+
+```{r}
+Acf(enplanements) # duomenims tikrai įtaką daro sezoniškumas
+```
+
+Kadangi pastebimas sezoniškumas, reikės naudoti nebe ndiffs, bet nsdiffs funkciją.
+
+```{r}
+lambdad <- BoxCox.lambda(enplanements) # lambdos radimas
+lambdad
+d <- BoxCox(enplanements, lambdad) # įvykdoma Box-Cox transformacija
+nd <- nsdiffs(enplanements) # surandama diferencijavimo eilė
+nd
+ddif <- diff(d, differences=nd) # diferencijuojami duomenys
+plot(ddif)
+```
+
+KPSS testas leis nustatyti, ar H0: duomenys stacionarūs.
+  
+```{r}
+kpss.test(ddif)
+```
+
+p-value = 0.1 > 0.05, vadinasi transformuoti duomenys yra stacionarūs.
+
+
+
+* **(e) visitors**
+
+```{r}
+plot(visitors)
+Acf(visitors) # duomenims įtaką daro sezoniškumas
+lambdae <- BoxCox.lambda(visitors) # lambdos radimas
+lambdae
+e <- BoxCox(visitors, lambdae) # įvykdoma Box-Cox transformacija
+ne <- nsdiffs(visitors) # surandama diferencijavimo eilė
+ne
+edif <- diff(e, differences=ne) # diferencijuojami duomenys
+plot(edif)
+```
+
+KPSS testas leis nustatyti, ar H0: duomenys stacionarūs.
+  
+```{r}
+kpss.test(edif)
+```
+
+p-value = 0.1 > 0.05, vadinasi transformuoti duomenys yra stacionarūs.
+
+
+## 2. Why is a Box-Cox transformation unhelpful for the cangas data?
+
+```{r}
+lambda_cangas <- BoxCox.lambda(cangas) # lambdos radimas
+lambda_cangas
+cang <- BoxCox(cangas, lambda_cangas) # įvykdoma Box-Cox transformacija
+plot(cangas, main="pradiniai duomenys")
+plot(cang, main="po Box-Cox transformacijos", col="blue")
+```
+
+Box-Cox transformacija šiuo atveju nėra naudinga, kadangi labai skiriasi pradinių/galinių bei vidurinių duomenų sklaidos, todėl transformacija negali prisitaikyti visiems duomenims.
+
+
+## 3. Download the data at http://robjhyndman.com/data/retail.xls. Choose one of the series and find an appropriate Box-Cox transformation and order of differencing in order to obtain stationary data. ##
+
+Nuskaitome duomenis.
+```{r}
+data = read.csv2("retail.csv", header = TRUE)
+data1 <- data[,7] # naudosimės septintu duomenų stulpeliu
+data2 <- ts(data1, start=c(1982,4), frequency=12) # sukuriama laiko eilutė
+plot(data2)
+kpss.test(data2) # pastebima, kad pradiniuose duomenyse stacionarumo nėra
+```
+
+```{r}
+lambda <- BoxCox.lambda(data2) # lambdos radimas
+lambda
+transformacija <- BoxCox(data2, lambda)
+n <- nsdiffs(data2) # nsdiffs - nes duomenys sezoniški (surandama diferencijavimo eilė)
+n
+
+
+dif <- diff(transformacija, differences=n) # diferencijuojami duomenys
+plot(dif)
+```
+
+```{r}
+kpss.test(dif) 
+```
+
+Pritaikius Box-Cox transformavimą ir diferencijavimą, duomenyse atsirado stacionarumas, nes p-value = 0.1 > 0.05
+
