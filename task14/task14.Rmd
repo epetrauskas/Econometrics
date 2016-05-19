@@ -1,0 +1,338 @@
+---
+title: "task14"
+author: "Edgaras Petrauskas"
+date: "Monday, May 16, 2016"
+output: html_document
+---
+
+##1. For the wmurders data:
+
+**(a) if necessary, find a suitable Box-Cox transformation for the data;**
+
+```{r, warning=FALSE, message=FALSE}
+library(fpp)
+library(knitr)
+plot(wmurders)
+```
+
+Box-Cox transformacija šiuo atveju nėra naudinga, kadangi duomenų sklaida nesikeičia. 
+
+**(b) fit a suitable ARIMA model to the transformed data using auto.arima();**
+
+```{r}
+fit <- auto.arima(wmurders)
+fit
+Acf(auto.arima(wmurders)$res)
+```
+
+Funkcija auto.arima siūlo modelį ARIMA(1,2,1). Modelio paklaidos atrodo kaip baltas triukšmas, vadinasi modelis yra tinkamas.
+
+**(c) try some other plausible models by experimenting with the orders chosen;**
+
+```{r}
+Acf(wmurders)
+```
+
+Kadangi ACF grafikas leidžiasi lėtai, vadinasi duomenys nėra stacionarūs. ARIMA reikalauja stacionarumo, todėl duomenis teks diferencijuoti.
+
+```{r}
+n <- ndiffs(wmurders) # surandama diferencijavimo eilė
+n 
+dif <- diff(wmurders, differences=n) # diferencijuojami duomenys
+plot(dif) 
+kpss.test(dif) # p-value > 0.05, vadinasi po antro diferencijavimo duomenys tapo stacionarūs
+Acf(dif, lag.max=50)
+Pacf(dif, lag.max=50)
+```
+
+ACF grafikas panašus į sinusoidinį, todėl galima pabandyti ARIMA(p,d,0) modelį. Taip pat išbandysime auto.arima pasiūlyto ARIMA(1,2,1) įvairias modifikacijas.
+
+```{r}
+fit1 <- Arima(wmurders, order=c(1,2,0))
+fit2 <- Arima(wmurders, order=c(2,2,0))
+fit3 <- Arima(wmurders, order=c(5,2,0))
+fit4 <- Arima(wmurders, order=c(0,2,1))
+fit5 <- Arima(wmurders, order=c(0,2,0))
+fit6 <- Arima(wmurders, order=c(1,2,2))
+```
+
+**(d) choose what you think is the best model and check the residual diagnostics;**
+
+```{r}
+a <- rbind(
+  accuracy(fit),
+  accuracy(fit1),
+  accuracy(fit2),
+  accuracy(fit3),
+  accuracy(fit4),
+  accuracy(fit5),
+  accuracy(fit6)
+)
+
+rownames(a) <- c('ARIMA(1,2,1)', 'ARIMA(1,2,0)', 'ARIMA(2,2,0)', 'ARIMA(5,2,0)', 'ARIMA(0,2,1)', 'ARIMA(0,2,0)', 'ARIMA(1,2,2)')
+kable(a, digits=2)
+
+b <- rbind(
+  fit[14],
+  fit1[14],
+  fit2[14],
+  fit3[14],
+  fit4[14],
+  fit5[14],
+  fit6[14]
+)
+rownames(b) <- c('ARIMA(1,2,1)', 'ARIMA(1,2,0)', 'ARIMA(2,2,0)', 'ARIMA(5,2,0)', 'ARIMA(0,2,1)', 'ARIMA(0,2,0)', 'ARIMA(1,2,2)')
+kable(b, digits=2)
+```
+
+Accuracy funkcijos rezultatai daugmaž vienodi, o pagal Corrected AIC geriausi ARIMA(0,2,1) ir ARIMA(1,2,2) modeliai. Patikrinsime jų paklaidas.
+
+```{r}
+summary(fit4)
+summary(fit6)
+Acf(fit4$res)
+Acf(fit6$res)
+```
+
+Paklaidos yra baltas triukšmas, toliau naudosime ARIMA(0,2,1) modelį.
+
+**(e) produce forecasts of your fitted model. Do the forecasts look reasonable?**
+
+```{r}
+plot(forecast(fit4))
+```
+
+Prognozė atrodo logiška, atsižvelgiama į mažėjimo trendą.
+
+**(f) compare the results with what you would obtain using ets() (with no transformation).**
+
+```{r}
+fitets <- ets(wmurders)
+fitets
+Acf(fitets$res) # paklaidos - baltas triukšmas
+plot(forecast(fitets))
+accuracy(fitets)
+accuracy(fit4)
+```
+
+ets() funkcijos tikslumo matai blogesni ir prognozė ne tokia logiška, vadinasi ARIMA(0,2,1) prognozė naudingesnė. 
+
+
+##2. For the usgdp data:
+
+**(a) if necessary, find a suitable Box-Cox transformation for the data;**
+
+```{r}
+plot(usgdp)
+```
+
+Box-Cox transformacija nėra reikalinga, kadangi duomenų sklaida nesikeičia ir jos nereikia stabilizuoti.
+
+**(b) fit a suitable ARIMA model to the transformed data using auto.arima();**
+
+```{r}
+fit <- auto.arima(usgdp)
+fit
+Acf(auto.arima(usgdp)$res)
+```
+
+Funkcija auto.arima siūlo modelį ARIMA(2,2,2). Modelio paklaidos atrodo kaip baltas triukšmas, vadinasi modelis yra tinkamas.
+
+**(c) try some other plausible models by experimenting with the orders chosen;**
+
+```{r}
+Acf(usgdp)
+```
+
+Pradiniuose duomenyse aiškus didėjimo trendas, be to ir ACF grafikas leidžiasi lėtai, vadinasi duomenys nėra stacionarūs. ARIMA reikalauja stacionarumo, todėl duomenis teks diferencijuoti.
+
+```{r}
+n <- ndiffs(usgdp) # surandama diferencijavimo eilė
+n 
+dif <- diff(usgdp, differences=n) # diferencijuojami duomenys
+plot(dif) 
+kpss.test(dif) # p-value > 0.05, vadinasi po antro diferencijavimo duomenys tapo stacionarūs
+Acf(dif, lag.max=50)
+Pacf(dif, lag.max=50)
+```
+
+ACF ir PACF grafikuose sunku įžiūrėti naudingos informacijos, kurią būtų galima panauodoti nustatant ARIMA modelio eiles. Išbandysime auto.arima pasiūlyto ARIMA(2,2,2) įvairias modifikacijas.
+
+```{r}
+fit1 <- Arima(usgdp, order=c(1,2,1))
+fit2 <- Arima(usgdp, order=c(1,2,2))
+fit3 <- Arima(usgdp, order=c(2,2,1))
+fit4 <- Arima(usgdp, order=c(3,2,2))
+fit5 <- Arima(usgdp, order=c(2,2,3))
+fit6 <- Arima(usgdp, order=c(3,2,3))
+```
+
+**(d) choose what you think is the best model and check the residual diagnostics;**
+
+```{r}
+a <- rbind(
+  accuracy(fit),
+  accuracy(fit1),
+  accuracy(fit2),
+  accuracy(fit3),
+  accuracy(fit4),
+  accuracy(fit5),
+  accuracy(fit6)
+)
+
+rownames(a) <- c('ARIMA(2,2,2)', 'ARIMA(1,2,1)', 'ARIMA(1,2,2)', 'ARIMA(2,2,1)', 'ARIMA(3,2,2)', 'ARIMA(2,2,3)', 'ARIMA(3,2,3)')
+kable(a, digits=2)
+
+b <- rbind(
+  fit[14],
+  fit1[14],
+  fit2[14],
+  fit3[14],
+  fit4[14],
+  fit5[14],
+  fit6[14]
+)
+rownames(b) <- c('ARIMA(2,2,2)', 'ARIMA(1,2,1)', 'ARIMA(1,2,2)', 'ARIMA(2,2,1)', 'ARIMA(3,2,2)', 'ARIMA(2,2,3)', 'ARIMA(3,2,3)')
+kable(b, digits=2)
+```
+
+Accuracy funkcijos rezultatai daugmaž vienodi, o pagal Corrected AIC geriausias ARIMA(2,2,1) modelis. Patikrinsime jo paklaidas.
+
+```{r}
+summary(fit3)
+Acf(fit3$res)
+```
+
+Paklaidos yra baltas triukšmas, toliau naudosime ARIMA(2,2,1) modelį.
+
+**(e) produce forecasts of your fitted model. Do the forecasts look reasonable?**
+
+```{r}
+plot(forecast(fit3, h=50))
+```
+
+Prognozė atrodo logiška, atsižvelgiama į didėjimo trendą.
+
+**(f) compare the results with what you would obtain using ets() (with no transformation).**
+
+```{r}
+fitets <- ets(usgdp)
+fitets
+Acf(fitets$res) # paklaidos - baltas triukšmas
+plot(forecast(fitets, h=50))
+accuracy(fitets)
+accuracy(fit3)
+```
+
+ets() prognozė šiems duomenims labai panaši į ARIMA prognozę, tačiau ets pasikliautinis intervalas žymiai didesnis. Tikslumo matai taip pat panašūs.
+
+
+##3. For the mcopper data:
+
+**(a) if necessary, find a suitable Box-Cox transformation for the data;**
+
+```{r}
+plot(mcopper)
+lambda <- BoxCox.lambda(mcopper) # lambdos radimas
+trans <- BoxCox(mcopper, lambda) # įvykdoma Box-Cox transformacija
+plot(trans)
+```
+
+Ryškių pakitimų neįvyko, duomenų variacija išliko panaši, todėl transformuotų duomenų nenaudosime.
+
+**(b) fit a suitable ARIMA model to the transformed data using auto.arima();**
+
+```{r}
+fit <- auto.arima(mcopper)
+fit
+Acf(auto.arima(mcopper)$res)
+```
+
+Funkcija auto.arima siūlo modelį ARIMA(0,1,1). Modelio paklaidos atrodo kaip baltas triukšmas, vadinasi modelis yra tinkamas.
+
+**(c) try some other plausible models by experimenting with the orders chosen;**
+
+```{r}
+Acf(mcopper)
+```
+
+Kadangi ACF grafikas leidžiasi lėtai, vadinasi duomenys nėra stacionarūs. ARIMA reikalauja stacionarumo, todėl duomenis teks diferencijuoti.
+
+```{r}
+n <- ndiffs(mcopper) # surandama diferencijavimo eilė
+n 
+dif <- diff(mcopper, differences=n) # diferencijuojami duomenys
+plot(dif) 
+kpss.test(dif) # p-value > 0.05, vadinasi po diferencijavimo duomenys tapo stacionarūs
+Acf(dif, lag.max=50)
+Pacf(dif, lag.max=50)
+```
+
+Išbandysime auto.arima pasiūlyto ARIMA(0,1,1) įvairias modifikacijas.
+
+```{r}
+fit1 <- Arima(mcopper, order=c(1,1,1))
+fit2 <- Arima(mcopper, order=c(1,1,2))
+fit3 <- Arima(mcopper, order=c(2,1,2))
+fit4 <- Arima(mcopper, order=c(1,1,3))
+```
+
+**(d) choose what you think is the best model and check the residual diagnostics;**
+
+```{r}
+a <- rbind(
+  accuracy(fit),
+  accuracy(fit1),
+  accuracy(fit2),
+  accuracy(fit3),
+  accuracy(fit4)
+)
+
+rownames(a) <- c('ARIMA(0,1,1)', 'ARIMA(1,1,1)', 'ARIMA(1,1,2)', 'ARIMA(2,1,2)', 'ARIMA(1,1,3)')
+kable(a, digits=2)
+
+b <- rbind(
+  fit[14],
+  fit1[14],
+  fit2[14],
+  fit3[14],
+  fit4[14]
+)
+rownames(b) <- c('ARIMA(0,1,1)', 'ARIMA(1,1,1)', 'ARIMA(1,1,2)', 'ARIMA(2,1,2)', 'ARIMA(1,1,3)')
+kable(b, digits=2)
+```
+
+Logiškiausia rinktis tarp ARIMA(2,1,2) ir ARIMA(1,1,3). 
+
+```{r}
+summary(fit3)
+summary(fit4)
+```
+
+Visi ARIMA(2,1,2) koeficientai statistiškai nereikšmingi, todėl toliau naudosime ARIMA(1,1,3) modelį.
+
+```{r}
+Acf(fit4$res) # paklaidos yra baltas triukšmas
+```
+
+**(e) produce forecasts of your fitted model. Do the forecasts look reasonable?**
+
+```{r}
+plot(forecast(fit4, h=50))
+```
+
+Staigus duomenų pakilimas trečiojo tūkstantmečio pradžioje ir nelauktas kritimas 2006-ų metų antroje pusėje išmušė iš vėžių galingąjį ARIMA prognozavimo metodą ir jis, nerizikuodamas stipriai apsirikti, grįžo prie prognozavimo ištakų ir pasirinko į naive panašią prognozę.
+
+**(f) compare the results with what you would obtain using ets() (with no transformation).**
+
+```{r}
+fitets <- ets(mcopper)
+fitets
+Acf(fitets$res) # gali būti, kad paklaidos nėra baltasis triukšmas
+Box.test(fitets$res, type="Lj") # p-value < 0.05, todėl paklaidos nėra baltasis triukšmas - modelis gali būti pagerintas
+plot(forecast(fitets, h=50))
+accuracy(fitets)
+accuracy(fit4)
+```
+
+ets() ir ARIMA pateikia panašias prognozes. 
