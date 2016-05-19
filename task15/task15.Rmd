@@ -1,0 +1,79 @@
+---
+title: "task15"
+author: "Edgaras Petrauskas"
+date: "Monday, May 16, 2016"
+output: html_document
+---
+
+##1. Choose one of the following seasonal time series: condmilk, hsales, uselec
+
+```{r, warning=FALSE, message=FALSE}
+library(fpp)
+library(knitr)
+plot(condmilk)
+```
+
+**(a) Do the data need transforming? If so, find a suitable transformation.**
+
+Duomenims transformacija nereikalinga, kadangi jų sklaida nekinta.
+
+**(b) Are the data stationary? If not, find an appropriate differencing which yields stationary data.**
+
+```{r}
+Acf(condmilk)
+```
+
+Duomenys nėra stacionarūs, matomas ryškus sezoniškumas, kurį reikia pašalinti norint stacionarumo.
+
+```{r}
+tsdisplay(diff(condmilk,12)) # po pirmo diferencijavimo duomenys vis dar nestacionarūs
+tsdisplay(diff(diff(condmilk,12))) # po anto diferencijavimo duomenys jau stacionarūs
+```
+
+**(c) Identify a couple of ARIMA models that might be useful in describing the time series. Which of your models is the best according to their AIC values?**
+
+```{r}
+fit1 <- Arima(condmilk, order=c(0,1,1), seasonal=list(order=c(1,1,1)))
+fit2 <- Arima(condmilk, order=c(0,1,1), seasonal=list(order=c(2,1,1)))
+fit3 <- Arima(condmilk, order=c(0,1,1), seasonal=list(order=c(2,1,0)))
+fit4 <- Arima(condmilk, order=c(1,1,1), seasonal=list(order=c(2,1,0)))
+fit5 <- Arima(condmilk, order=c(0,0,1), seasonal=list(order=c(0,1,1)))
+fit6 <- Arima(condmilk, order=c(1,0,0), seasonal=list(order=c(2,1,0)))    
+
+fit1$aic 
+fit2$aic
+fit3$aic
+fit4$aic 
+fit5$aic 
+fit6$aic
+```
+
+Pasibandžius įvairius variantus, pagal AIC geriausias fit4 - ARIMA(1,1,1)(2,1,0)[12] modelis.
+
+**(d) Estimate the parameters of your best model and do diagnostic testing on the residuals. Do the residuals resemble white noise? If not, try to find another ARIMA model which fits better.**
+
+```{r}
+fit4 # visi parametrai statistiškai reikšmingi
+Acf(fit4$res)
+Box.test(fit4$res, type="Lj") # paklaidos yra baltasis triukšmas
+```
+
+**(e) Forecast the next 24 months of data using your preferred model.**
+
+```{r}
+plot(forecast(fit4, h=24))
+```
+
+Prognozė logiška.
+
+**(f) Compare the forecasts obtained using ets().**
+
+```{r}
+fitets <- ets(condmilk)
+plot(forecast(fitets))
+
+accuracy(fitets)
+accuracy(fit4)
+```
+
+Nors ets() tikslumo matai geresni, tačiau ARIMA prognozė atrodo logiškesnė.
