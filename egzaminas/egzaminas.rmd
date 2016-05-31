@@ -1,0 +1,13 @@
+---
+title: "Egzaminas"
+author: "Edgaras Petrauskas"
+date: "Tuesday, May 31, 2016"
+output: html_document
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(car)
+library(fpp)
+library(dynlm)
+library(knitr)
+```
