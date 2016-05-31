@@ -11,3 +11,205 @@ library(fpp)
 library(dynlm)
 library(knitr)
 ```
+
+## 2.Užduotis 
+
+# 1.
+
+**a)**
+
+```{r}
+data <- read.csv2("data_b.csv", header=TRUE)
+attach(data)
+str(data)
+head(data)
+```
+
+**b)**
+
+```{r}
+sum(data == "MISSING") 
+```
+
+Yra 5 reiksmes missing, kurias reikia pasalinti. Taip pat str parode, jog kaina, rida ir amzius traktuojami kaip faktoriai, nors is tikro jie turetu buti numeric tipo, todel reikia juos pakeisti i tinkama duomenu tipa.
+
+```{r}
+data <- data[-c(5, 54, 97, 100, 201), ]
+str(data) 
+```
+
+Pasalinti 5 irasai, liko 347 irasai
+
+```{r}
+suppressWarnings(as.numeric(levels(kaina))[kaina])
+as.numeric(levels(rida))[rida]
+suppressWarnings(as.numeric(levels(amzius))[amzius])
+```
+
+
+## 3.Užduotis 
+
+Duomenu vizulizacija
+
+```{r}
+head(M1Germany)
+str(M1Germany)
+plot(M1Germany)
+```
+
+**a)** Įvertinkite tiesinę regresija žemiau pateikto modelio:
+
+```{r}
+mod1 <- dynlm(logm1 ~ L(logprice,1), data = M1Germany)
+kable(summary(mod1)$coef,digits=2)
+```
+
+**b)** Liekanos transformuojamos i laiko eilute:
+
+```{r}
+serOrg <- mod1$res
+liekanu_ts <- ts(serOrg, start=1960, frequency=4)
+str(liekanu_ts)
+```
+
+**c)** Isbreziama serOrg ir pastebimas sezoniskumas:
+
+```{r}
+tsdisplay(serOrg)
+```
+
+Bandysime pasalinti sezoniskuma.
+
+ Pirmasis budas:
+```{r}
+naikinam <- stl(serOrg, s.window="periodic")
+plot(naikinam)
+
+# Pavaizduojami eiliskumo tvarka: originalus duomenys, sezonine komponente, trendo komponente ir likutis
+
+```
+
+```{r}
+head(naikinam$time.series)
+head(naikinam$time.series[,1])
+reikalinga <- naikinam$time.series[,1]
+str(naikinam)
+```
+
+```{r}
+reikalinga_ts <- ts(reikalinga, start=1960, frequency=4)
+head(liekanu_ts)
+head(reikalinga_ts)
+panaikintas <- liekanu_ts-reikalinga_ts
+plot(panaikintas)
+```
+
+Antrasis budas:
+
+```{r}
+modelis <- lm(serOrg ~ reikalinga, data=M1Germany)
+plot(modelis$res)
+```
+
+Abieju budu rezultatai vienodi, pirmenybe teiksiu pirmam budui. Nusezoninta eilute priskirsiu ser.
+
+```{r}
+ser <- panaikintas
+str(ser)
+```
+
+**d)** Tikriname, ar ser eilute stacionari. 
+
+```{r}
+tsdisplay(ser)
+n <- ndiffs(ser) # surandama diferencijavimo eilė
+n 
+```
+
+ACF grafikas krenta greitai, ndiffs taip pat nesiulo diferencijuoti, todel eilute yra stacionari.
+
+**e)**
+
+```{r}
+lambda <- BoxCox.lambda(ser) # lambdos radimas
+trans <- BoxCox(ser, lambda) # įvykdoma Box-Cox transformacija
+plot(trans)
+```
+
+Variacija nesikeicia, todel Box-Cox transformacija nebutina.
+
+##2
+
+**a)**
+
+```{r}
+mod1 <- ets(ser)
+mod1[13]
+```
+
+Pasiule ETS(A,N,N) - t.y. adityvios paklaidos, nera nei trendo, nei sezoniskumo.
+
+**b)**
+
+mod11 <- ets(ser, model="   ")
+mod12 <- ets(ser, model="   ")
+
+**c)**
+
+```{r}
+mod3 <- auto.arima(ser)
+mod3
+```
+
+Integruotumo eilė sutampa su 1.d atsakyme pasiūlyta eile. 
+p - autoregresinė modelio dalis, d - diferencijavimo eilė, q - moving average modelio dalis.
+Kiti 3 skaiciai - sezoniniai atitikmenys.
+
+**d)**
+
+```{r}
+fit1 <- Arima(ser, order=c(2,0,0), seasonal=list(order=c(1,0,0)))
+fit2 <- Arima(ser, order=c(1,0,0), seasonal=list(order=c(2,0,0)))
+
+fit1$aic 
+fit2$aic 
+mod3$aic 
+mod4 <- mod3
+```
+
+mod3 atrodo geriausia, nes jo AIC yra maziausias
+
+##3
+
+**a)**
+
+```{r}
+acf(mod1$res)
+acf(mod3$res)
+acf(mod4$res)
+# visur liekanos atrodo kaip baltasis triuksmas
+```
+
+**b)**
+
+```{r}
+trainSet <- window(ser, end=c(1990,4))
+testSet <- window(ser, start=c(1991,1))
+head(testSet)
+head(trainSet)
+```
+
+**c)**
+
+```{r}
+mod111 <- auto.arima(trainSet)
+mod222 <- auto.arima(trainSet)
+mod333 <- auto.arima(trainSet)
+```
+
+**d)**
+
+```{r}
+b <- forecast(mod222)
+plot(b)
+```
